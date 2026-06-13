@@ -24,19 +24,10 @@ Shared hook engine for IL2CPP and HybridCLR runtimes.
 HookEngine.Initialize(new BepInExHookLogger(Logger));
 ```
 
-## Breaking migration
-
-- `BepInEx.HybridCLR.Hooking` is now `IL2CppSharp.Hooking`.
-- `HybridCLR.RuntimeHooks` is now `IL2CppSharp.Hooking`.
-- `HybridCLR.RuntimeHooks.BepInEx` is now `IL2CppSharp.Hooking.BepInEx`.
-- `IRuntimeHookLogger` is now `IHookLogger`.
-- `BepInExRuntimeHookLogger` is now `BepInExHookLogger`.
-- No compatibility shim is provided.
-
 ## Build
 
 ```bash
-dotnet build client-plugin/IL2CppSharp.Hooking/IL2CppSharp.Hooking.csproj -c Release /p:GeneratePackageOnBuild=false
+dotnet build IL2CppSharp.Hooking.csproj -c Release /p:GeneratePackageOnBuild=false
 ```
 
 ## License
