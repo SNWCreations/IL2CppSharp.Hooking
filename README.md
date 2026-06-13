@@ -13,14 +13,6 @@ Shared hook engine for IL2CPP and HybridCLR runtimes.
 - `IL2CppSharp`
 - `SNWCreations.Il2CppInterop.Runtime`
 
-## Used by
-
-- `AstralParty.Modding`
-- `AstralPartyMod`
-- `APCP`
-- `EventNotifier`
-- `BIEScriptRunner`
-
 ## Public build notes
 
 - This is a standalone library repository, not a BepInEx plugin by itself.
