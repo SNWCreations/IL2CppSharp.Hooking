@@ -46,7 +46,7 @@ jobs:
         shell: pwsh
         run: |
           [xml]$project = Get-Content IL2CppSharp.Hooking.csproj
-          $version = $project.Project.PropertyGroup.Version
+          $version = "$($project.Project.PropertyGroup.Version)".Trim()
           $expectedTag = "v$version"
           if ($env:GITHUB_REF_NAME -ne $expectedTag) {
             throw "Tag '$env:GITHUB_REF_NAME' does not match package version '$expectedTag'."
