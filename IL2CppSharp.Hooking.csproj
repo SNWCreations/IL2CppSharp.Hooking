@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>IL2CppSharp.Hooking</AssemblyName>
+    <RootNamespace>IL2CppSharp.Hooking</RootNamespace>
+    <PackageId>IL2CppSharp.Hooking</PackageId>
+    <Version>0.1.0-alpha.1</Version>
+    <Authors>SNWCreations</Authors>
+    <Description>Shared IL2CPP and HybridCLR runtime hook engine.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/SNWCreations/IL2CppSharp.Hooking</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/SNWCreations/IL2CppSharp.Hooking.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>il2cpp;unity;modding;hooking;hybridclr</PackageTags>
+    <Copyright>Copyright (c) 2026 SNWCreations, IL2CppSharp.Hooking contributors</Copyright>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IL2CppSharpVersion Condition="'$(IL2CppSharpVersion)' == ''">0.1.0-alpha.5</IL2CppSharpVersion>
+    <SNWCreationsIl2CppInteropRuntimeVersion Condition="'$(SNWCreationsIl2CppInteropRuntimeVersion)' == ''">1.5.2-snw.1</SNWCreationsIl2CppInteropRuntimeVersion>
+    <UseLocalIL2CppSharpProject Condition="'$(UseLocalIL2CppSharpProject)' == ''">false</UseLocalIL2CppSharpProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="extern\**\*.cs" />
+    <EmbeddedResource Remove="extern\**\*" />
+    <Content Remove="extern\**\*" />
+    <None Remove="extern\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SNWCreations.Il2CppInterop.Runtime" Version="$(SNWCreationsIl2CppInteropRuntimeVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalIL2CppSharpProject)' == 'true'">
+    <ProjectReference Include="$(IL2CppSharpProject)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalIL2CppSharpProject)' != 'true'">
+    <PackageReference Include="IL2CppSharp" Version="$(IL2CppSharpVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="\" Condition="Exists('LICENSE')" />
+    <None Include="THIRD_PARTY_NOTICES.md" Pack="true" PackagePath="\" Condition="Exists('THIRD_PARTY_NOTICES.md')" />
+  </ItemGroup>
+
+  <Target Name="ValidateLocalProjectReferences" BeforeTargets="ResolveReferences">
+    <Error Condition="'$(UseLocalIL2CppSharpProject)' == 'true' and ('$(IL2CppSharpProject)' == '' or !Exists('$(IL2CppSharpProject)'))"
+           Text="UseLocalIL2CppSharpProject is true, but IL2CppSharpProject is empty or does not exist. Set it in Directory.Build.props." />
+  </Target>
+
+</Project>

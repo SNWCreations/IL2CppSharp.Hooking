@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <!-- Optional. Use a local IL2CppSharp source checkout instead of the package reference. -->
+    <!-- <UseLocalIL2CppSharpProject>true</UseLocalIL2CppSharpProject> -->
+    <!-- <IL2CppSharpProject>PATH_TO_IL2CPPSHARP_REPO\IL2CppSharp.csproj</IL2CppSharpProject> -->
+
+    <!-- Optional. Override package versions for local feed testing. -->
+    <!-- <IL2CppSharpVersion>0.1.0-alpha.5</IL2CppSharpVersion> -->
+    <!-- <SNWCreationsIl2CppInteropRuntimeVersion>1.5.2-snw.1</SNWCreationsIl2CppInteropRuntimeVersion> -->
+  </PropertyGroup>
+</Project>
