@@ -49,4 +49,4 @@ dotnet build client-plugin/IL2CppSharp.Hooking/IL2CppSharp.Hooking.csproj -c Rel
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

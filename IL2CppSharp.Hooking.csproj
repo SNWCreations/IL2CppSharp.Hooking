@@ -5,10 +5,10 @@
     <AssemblyName>IL2CppSharp.Hooking</AssemblyName>
     <RootNamespace>IL2CppSharp.Hooking</RootNamespace>
     <PackageId>IL2CppSharp.Hooking</PackageId>
-    <Version>0.1.0-alpha.1</Version>
+    <Version>0.1.0-alpha.2</Version>
     <Authors>SNWCreations</Authors>
     <Description>Shared IL2CPP and HybridCLR runtime hook engine.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/SNWCreations/IL2CppSharp.Hooking</PackageProjectUrl>
     <RepositoryUrl>https://github.com/SNWCreations/IL2CppSharp.Hooking.git</RepositoryUrl>
