@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.InteropServices;
 using IL2CppSharp.Hooking.Internal;
 
 namespace IL2CppSharp.Hooking;
@@ -72,6 +73,11 @@ public readonly struct HookHandle
         if (TrampolineAddress == IntPtr.Zero)
             throw new InvalidOperationException(
                 "Trampoline address is null — hook may not have been installed correctly.");
+
+        if (Strategy == HookStrategy.NativeExportInline)
+            return Marshal.GetDelegateForFunctionPointer<T>(TrampolineAddress);
+
+        DelegateSignatureValidator.ValidateOriginalDelegate<T>(MethodInfoPtr, $"0x{MethodInfoPtr:X} ({Strategy})");
 
         IntPtr methodInfo = ShadowMethodInfo != IntPtr.Zero ? ShadowMethodInfo : MethodInfoPtr;
         return ShadowThunkGenerator.CreateDelegate<T>(TrampolineAddress, methodInfo);

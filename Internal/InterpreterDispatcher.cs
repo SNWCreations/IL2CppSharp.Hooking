@@ -231,6 +231,7 @@ internal static unsafe class InterpreterDispatcher
 
     private const int MaxPrologueInstructions = 60;
     private const int MaxBridgeDisasmBytes = 256;
+    private const int MaxInvokerDisasmBytes = 768;
     private const int MaxBackwardScan = 512;
 
     /// <summary>
@@ -277,10 +278,18 @@ internal static unsafe class InterpreterDispatcher
     /// Pattern: after the interpData check (cmp [reg+0x58], reg), find the call
     /// preceded by lea rcx, [rbp+XX] (loading InterpFrameGroup*).
     /// </summary>
-    private static IntPtr FindEnterFrameFromNativeInPrologue(IntPtr executeAddr)
+    private static IntPtr FindEnterFrameFromNativeInPrologue(IntPtr executeAddr, bool logDetails = true)
     {
-        var reader = new UnsafeCodeReader((byte*)executeAddr, 512);
-        var decoder = Decoder.Create(64, reader, (ulong)executeAddr, DecoderOptions.None);
+        Decoder decoder;
+        try
+        {
+            var reader = new UnsafeCodeReader((byte*)executeAddr, 512);
+            decoder = Decoder.Create(64, reader, (ulong)executeAddr, DecoderOptions.None);
+        }
+        catch
+        {
+            return IntPtr.Zero;
+        }
 
         bool foundInterpDataCheck = false;
         bool sawLeaRcxRbp = false;
@@ -295,8 +304,9 @@ internal static unsafe class InterpreterDispatcher
                 && instr.MemoryDisplacement64 == 0x58)
             {
                 foundInterpDataCheck = true;
-                _log.Debug(
-                    $"[InterpreterDispatcher] interpData check at 0x{instr.IP:X}");
+                if (logDetails)
+                    _log.Debug(
+                        $"[InterpreterDispatcher] interpData check at 0x{instr.IP:X}");
                 continue;
             }
 
@@ -475,30 +485,86 @@ internal static unsafe class InterpreterDispatcher
     /// Find Interpreter::Execute by disassembling an interpreter method's
     /// Native2Managed bridge stub. The bridge calls Execute as:
     ///   Interpreter::Execute(method, args, ret)
-    /// We find the CALL instruction target.
+    /// Some interpreter methods can point at throw/helper stubs, so every call
+    /// target is validated against Execute's frame-entry prologue before use.
     /// </summary>
     private static IntPtr FindExecuteAddress()
     {
-        IntPtr probeMethod = FindAnyInterpreterMethod();
-        if (probeMethod == IntPtr.Zero)
+        IntPtr selectedMethod = IntPtr.Zero;
+        IntPtr selectedBridge = IntPtr.Zero;
+        IntPtr selectedProbe = IntPtr.Zero;
+        IntPtr selectedExecute = IntPtr.Zero;
+        string selectedProbeKind = null;
+
+        int interpreterMethods = VisitInterpreterMethods(method =>
+        {
+            IntPtr bridgeAddr = *(IntPtr*)method;
+            if (bridgeAddr != IntPtr.Zero)
+            {
+                IntPtr executeAddr = FindExecuteAddressInCallSite(bridgeAddr, MaxBridgeDisasmBytes);
+                if (executeAddr != IntPtr.Zero)
+                {
+                    selectedMethod = method;
+                    selectedBridge = bridgeAddr;
+                    selectedProbe = bridgeAddr;
+                    selectedExecute = executeAddr;
+                    selectedProbeKind = "bridge";
+                    return true;
+                }
+            }
+
+            var state = HybridCLRDetour.CaptureMethodInfoState(method);
+            if (state.HasValue && state.Value.InvokerMethod != IntPtr.Zero)
+            {
+                IntPtr executeAddr = FindExecuteAddressInCallSite(
+                    state.Value.InvokerMethod, MaxInvokerDisasmBytes);
+                if (executeAddr != IntPtr.Zero)
+                {
+                    selectedMethod = method;
+                    selectedBridge = bridgeAddr;
+                    selectedProbe = state.Value.InvokerMethod;
+                    selectedExecute = executeAddr;
+                    selectedProbeKind = "invoker";
+                    return true;
+                }
+            }
+
+            return false;
+        });
+
+        if (selectedExecute != IntPtr.Zero)
+        {
+            _log.Debug($"[InterpreterDispatcher] Found interpreter probe method 0x{selectedMethod:X}");
+            if (selectedProbeKind == "bridge")
+            {
+                _log.Info($"[InterpreterDispatcher] Probing bridge at 0x{selectedProbe:X}");
+            }
+            else
+            {
+                _log.Info(
+                    $"[InterpreterDispatcher] Probing invoker at 0x{selectedProbe:X} (bridge=0x{selectedBridge:X})");
+            }
+
+            return selectedExecute;
+        }
+
+        if (interpreterMethods == 0)
         {
             _log.Error("[InterpreterDispatcher] No interpreter method found for probe");
             return IntPtr.Zero;
         }
 
-        IntPtr bridgeAddr = *(IntPtr*)probeMethod;
-        if (bridgeAddr == IntPtr.Zero)
-        {
-            _log.Error("[InterpreterDispatcher] Probe method has null methodPointer");
-            return IntPtr.Zero;
-        }
+        _log.Error(
+            $"[InterpreterDispatcher] No Interpreter::Execute call found in {interpreterMethods} interpreter method probe(s)");
+        return IntPtr.Zero;
+    }
 
-        _log.Info($"[InterpreterDispatcher] Probing bridge at 0x{bridgeAddr:X}");
+    private static IntPtr FindExecuteAddressInCallSite(IntPtr callSiteAddr, int maxDisasmBytes)
+    {
+        var reader = new UnsafeCodeReader((byte*)callSiteAddr, maxDisasmBytes);
+        var decoder = Decoder.Create(64, reader, (ulong)callSiteAddr, DecoderOptions.None);
 
-        var reader = new UnsafeCodeReader((byte*)bridgeAddr, MaxBridgeDisasmBytes);
-        var decoder = Decoder.Create(64, reader, (ulong)bridgeAddr, DecoderOptions.None);
-
-        while (decoder.IP < (ulong)bridgeAddr + MaxBridgeDisasmBytes)
+        while (decoder.IP < (ulong)callSiteAddr + (uint)maxDisasmBytes)
         {
             var instr = decoder.Decode();
             if (instr.IsInvalid) break;
@@ -506,7 +572,7 @@ internal static unsafe class InterpreterDispatcher
             if (instr.FlowControl == FlowControl.Call && instr.Op0Kind == OpKind.NearBranch64)
             {
                 var target = (IntPtr)instr.NearBranchTarget;
-                if (IsValidFunctionTarget(target))
+                if (IsValidFunctionTarget(target) && LooksLikeInterpreterExecute(target))
                     return target;
             }
 
@@ -514,11 +580,15 @@ internal static unsafe class InterpreterDispatcher
                 break;
         }
 
-        _log.Error($"[InterpreterDispatcher] No CALL found in bridge at 0x{bridgeAddr:X}");
         return IntPtr.Zero;
     }
 
-    private static IntPtr FindAnyInterpreterMethod()
+    private static bool LooksLikeInterpreterExecute(IntPtr target)
+    {
+        return FindEnterFrameFromNativeInPrologue(target, logDetails: false) != IntPtr.Zero;
+    }
+
+    private static int VisitInterpreterMethods(Func<IntPtr, bool> visitor)
     {
         _log.Debug("[InterpreterDispatcher] Scanning loaded IL2CPP images for an interpreter method");
 
@@ -541,11 +611,13 @@ internal static unsafe class InterpreterDispatcher
         static extern IntPtr il2cpp_class_get_methods(IntPtr klass, ref IntPtr iter);
 
         IntPtr domain = il2cpp_domain_get();
-        if (domain == IntPtr.Zero) return IntPtr.Zero;
+        if (domain == IntPtr.Zero) return 0;
 
         uint asmCount = 0;
         IntPtr asmArray = il2cpp_domain_get_assemblies(domain, ref asmCount);
-        if (asmArray == IntPtr.Zero || asmCount == 0) return IntPtr.Zero;
+        if (asmArray == IntPtr.Zero || asmCount == 0) return 0;
+
+        int interpreterMethods = 0;
 
         for (uint a = 0; a < asmCount; a++)
         {
@@ -571,14 +643,15 @@ internal static unsafe class InterpreterDispatcher
                     IntPtr ptr = *(IntPtr*)method;
                     if (ptr != IntPtr.Zero)
                     {
-                        _log.Debug($"[InterpreterDispatcher] Found interpreter probe method 0x{method:X}");
-                        return method;
+                        interpreterMethods++;
+                        if (visitor(method))
+                            return interpreterMethods;
                     }
                 }
             }
         }
 
-        return IntPtr.Zero;
+        return interpreterMethods;
     }
 
     private static bool IsValidFunctionTarget(IntPtr target)

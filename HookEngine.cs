@@ -103,6 +103,8 @@ public static unsafe class HookEngine
             if (originalMethodPointer == IntPtr.Zero)
                 throw new InvalidOperationException($"Method pointer is null: {methodName}");
 
+            DelegateSignatureValidator.ValidateHookDelegate(methodInfoPtr, detourFunc, methodName);
+
             bool isInterpreterMethod = HybridCLRDetour.IsInterpreterMethod(methodInfoPtr);
 
             // Skip address dedup for interpreter methods — their bridge gets duplicated by PrepareMethodForDetour
