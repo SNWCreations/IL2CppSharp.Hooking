@@ -5,7 +5,7 @@
     <AssemblyName>IL2CppSharp.Hooking</AssemblyName>
     <RootNamespace>IL2CppSharp.Hooking</RootNamespace>
     <PackageId>IL2CppSharp.Hooking</PackageId>
-    <Version>0.1.0-alpha.5</Version>
+    <Version>0.1.1-alpha.1</Version>
     <Authors>SNWCreations</Authors>
     <Description>Shared IL2CPP and HybridCLR runtime hook engine.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
