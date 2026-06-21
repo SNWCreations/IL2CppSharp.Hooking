@@ -5,7 +5,7 @@
     <AssemblyName>IL2CppSharp.Hooking</AssemblyName>
     <RootNamespace>IL2CppSharp.Hooking</RootNamespace>
     <PackageId>IL2CppSharp.Hooking</PackageId>
-    <Version>0.1.1-alpha.1</Version>
+    <Version>0.1.1-alpha.2</Version>
     <Authors>SNWCreations</Authors>
     <Description>Shared IL2CPP and HybridCLR runtime hook engine.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -21,7 +21,7 @@
 
   <PropertyGroup>
     <IL2CppSharpVersion Condition="'$(IL2CppSharpVersion)' == ''">0.1.0-alpha.5</IL2CppSharpVersion>
-    <SNWCreationsIl2CppInteropRuntimeVersion Condition="'$(SNWCreationsIl2CppInteropRuntimeVersion)' == ''">1.5.2-snw.2</SNWCreationsIl2CppInteropRuntimeVersion>
+    <SNWCreationsIl2CppInteropRuntimeVersion Condition="'$(SNWCreationsIl2CppInteropRuntimeVersion)' == ''">1.5.2-snw.3</SNWCreationsIl2CppInteropRuntimeVersion>
     <UseLocalIL2CppSharpProject Condition="'$(UseLocalIL2CppSharpProject)' == ''">false</UseLocalIL2CppSharpProject>
   </PropertyGroup>
 
