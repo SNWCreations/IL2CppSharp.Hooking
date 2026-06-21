@@ -40,11 +40,6 @@ internal static class HybridCLRDetour
     }
 
     /// <summary>
-    /// Detect whether the current runtime exposes HybridCLR RuntimeApi internal calls.
-    /// </summary>
-    public static bool IsHybridCLRRuntime() => HybridCLRCompat.IsHybridCLRRuntime();
-
-    /// <summary>
     /// Check if a method is implemented by the HybridCLR interpreter using managed MethodInfo.
     /// </summary>
     public static bool IsInterpreterMethod(MethodInfo methodInfo)
@@ -53,47 +48,7 @@ internal static class HybridCLRDetour
             return false;
 
         IntPtr ptr = GetNativeMethodInfoPointer(methodInfo);
-        return IsInterpreterMethod(ptr);
-    }
-
-    /// <summary>
-    /// Check if a method is implemented by the HybridCLR interpreter using native pointer.
-    /// </summary>
-    public static bool IsInterpreterMethod(IntPtr methodInfoPtr)
-    {
-        if (methodInfoPtr == IntPtr.Zero)
-            return false;
-
-        try
-        {
-            return HybridCLRCompat.IsInterpreterMethod(methodInfoPtr);
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Prepare a HybridCLR interpreter method for detouring.
-    /// Duplicates the bridge code and updates methodPointer to the copy.
-    /// </summary>
-    public static bool PrepareMethodForDetour(IntPtr methodInfoPtr, IHookLogger log = null, string methodName = null)
-    {
-        log?.Info($"[HybridCLRDetour] PrepareMethodForDetour: {methodName ?? "unknown"}");
-
-        if (methodInfoPtr == IntPtr.Zero)
-            return false;
-
-        try
-        {
-            return HybridCLRCompat.PrepareMethodForDetour(methodInfoPtr);
-        }
-        catch (Exception ex)
-        {
-            log?.Warning($"[HybridCLRDetour] PrepareMethodForDetour failed: {ex.Message}");
-            return false;
-        }
+        return HybridCLRCompat.IsInterpreterMethod(ptr);
     }
 
     internal static HybridCLRMethodInfoState? CaptureMethodInfoState(IntPtr methodInfoPtr)

@@ -21,7 +21,7 @@
 
   <PropertyGroup>
     <IL2CppSharpVersion Condition="'$(IL2CppSharpVersion)' == ''">0.1.0-alpha.5</IL2CppSharpVersion>
-    <SNWCreationsIl2CppInteropRuntimeVersion Condition="'$(SNWCreationsIl2CppInteropRuntimeVersion)' == ''">1.5.2-snw.3</SNWCreationsIl2CppInteropRuntimeVersion>
+    <SNWCreationsIl2CppInteropRuntimeVersion Condition="'$(SNWCreationsIl2CppInteropRuntimeVersion)' == ''">1.5.2-snw.4</SNWCreationsIl2CppInteropRuntimeVersion>
     <UseLocalIL2CppSharpProject Condition="'$(UseLocalIL2CppSharpProject)' == ''">false</UseLocalIL2CppSharpProject>
   </PropertyGroup>
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Il2CppInterop.Runtime.Injection;
 using IL2CppSharp.Hooking;
 using Iced.Intel;
 using IL2CppSharp;
@@ -638,7 +639,7 @@ internal static unsafe class InterpreterDispatcher
                 IntPtr method;
                 while ((method = il2cpp_class_get_methods(klass, ref iter)) != IntPtr.Zero)
                 {
-                    if (!HybridCLRDetour.IsInterpreterMethod(method)) continue;
+                    if (!HybridCLRCompat.IsInterpreterMethod(method)) continue;
 
                     IntPtr ptr = *(IntPtr*)method;
                     if (ptr != IntPtr.Zero)

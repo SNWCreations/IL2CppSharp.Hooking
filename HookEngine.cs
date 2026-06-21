@@ -105,7 +105,7 @@ public static unsafe class HookEngine
 
             DelegateSignatureValidator.ValidateHookDelegate(methodInfoPtr, detourFunc, methodName);
 
-            bool isInterpreterMethod = HybridCLRDetour.IsInterpreterMethod(methodInfoPtr);
+            bool isInterpreterMethod = HybridCLRCompat.IsInterpreterMethod(methodInfoPtr);
 
             // Skip address dedup for interpreter methods — their bridge gets duplicated by PrepareMethodForDetour
             if (!isInterpreterMethod && _hookedAddresses.TryGetValue(originalMethodPointer, out _))
@@ -317,7 +317,7 @@ public static unsafe class HookEngine
 
         IntPtr detourAddress = Marshal.GetFunctionPointerForDelegate(detourFunc);
 
-        if (!HybridCLRDetour.PrepareMethodForDetour(methodInfoPtr, _log, methodName))
+        if (!HybridCLRCompat.PrepareMethodForDetour(methodInfoPtr))
             throw new InvalidOperationException($"Failed to prepare interpreter method: {methodName}");
 
         // After PrepareMethodForDetour:
